@@ -9,7 +9,7 @@ use std::any::Any;
 
 use crate::{Tuneable, TUNA_STATE};
 
-/// Implemented by types that can be
+/// Implemented by types that can be used to make tuneables; i.e., manipulated state with various constraints
 pub trait AsTuneable: Any + Clone + Sized {
     type Result;
 
@@ -37,7 +37,7 @@ pub fn register<T: AsTuneable>(category: &str, name: &str, value: &T) {
     group.insert(name.to_owned(), value.make_tuneable());
 }
 
-/// Get a tunable variable or a default.
+/// Get a the value of tunable variable, if it matches the expected type
 pub fn get<T: AsTuneable>(category: &str, name: &str) -> Option<T::Result> {
     let tuna = TUNA_STATE.read();
 
@@ -46,6 +46,7 @@ pub fn get<T: AsTuneable>(category: &str, name: &str) -> Option<T::Result> {
         .and_then(|value| T::from_tuneable(value))
 }
 
+/// Set a tuneable variable, if it makes the expected type
 pub fn set<T: AsTuneable>(category: &str, name: &str, value: T::Result) {
     let mut tuna = TUNA_STATE.write();
 
@@ -54,6 +55,7 @@ pub fn set<T: AsTuneable>(category: &str, name: &str, value: T::Result) {
     }
 }
 
+/// Reset the variable to default value
 pub fn reset<T: AsTuneable>(category: &str, name: &str) {
     let mut tuna = TUNA_STATE.write();
 
