@@ -19,4 +19,4 @@ tungstenite = "0.13.0"
 tuna = { version = "0.0.2", path = "../tuna" }
 
 [dev-dependencies]
-env_logger = "*"
+env_logger = "0.8.3"
