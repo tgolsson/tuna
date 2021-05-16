@@ -2,7 +2,7 @@
 
 Web frontend for the Tuna CVAR tool to allow browser access to variables.
 
-![Example image of the tuna-web UI](frontend.png "Logo Title Text 1")
+![Example image of the tuna-web UI](https://github.com/tgolsson/tuna/raw/main/crates/tuna-web/frontend.png "Logo Title Text 1")
 
 ``` rust
 fn main() {
