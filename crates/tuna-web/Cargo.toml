@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["Tom Solberg <me@sbg.dev>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
-description = "Tuna-bles for live-tweaking of variables, for games and other applications."
+description = "Web GUI for tuna"
 homepage = "https://github.com/tgolsson/tuna"
 repository = "https://github.com/tgolsson/tuna"
 
