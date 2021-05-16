@@ -19,7 +19,7 @@ pub struct Float32 {
     pub(crate) max: Option<f32>,
 }
 
-/// The state of a boolean variable
+/// The state of a float variable
 #[derive(Clone, Debug, SerJson, DeJson)]
 pub struct Float32Variable {
     pub(crate) default: f32,
@@ -30,7 +30,7 @@ pub struct Float32Variable {
 }
 
 impl Float32 {
-    /// Define a new boolean variable that can be registered with tuna
+    /// Define a new float variable that can be registered with tuna
     pub const fn new(
         category: &'static str,
         name: &'static str,
@@ -47,7 +47,7 @@ impl Float32 {
         }
     }
 
-    /// Explicitly register the boolean with tuna. This is not required, but
+    /// Explicitly register the float with tuna. This is not required, but
     /// it'll reduce risk of stuttering when variables get registered.
     pub fn register(&self) {
         crate::register(self.category, self.name, self)

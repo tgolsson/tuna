@@ -140,7 +140,7 @@ use float::Float32Variable;
 impl_tuneable!(Float32, Float32Variable, f32);
 
 pub use crate::boolean::Boolean;
-pub use boolean::BooleanVariable;
+use boolean::BooleanVariable;
 impl_tuneable_simple!(Boolean, BooleanVariable, bool);
 
 pub use crate::api::*;
