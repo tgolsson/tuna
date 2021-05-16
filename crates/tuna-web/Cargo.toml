@@ -1,0 +1,22 @@
+[package]
+name = "tuna-web"
+version = "0.0.1"
+authors = ["Tom Solberg <me@sbg.dev>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Tuna-bles for live-tweaking of variables, for games and other applications."
+homepage = "https://github.com/tgolsson/tuna"
+repository = "https://github.com/tgolsson/tuna"
+
+[dependencies]
+anyhow = "1.0.40"
+include_dir = "0.6.0"
+log = "0.4"
+nanoserde = "0.1.25"
+tiny_http = "0.8.2"
+tungstenite = "0.13.0"
+
+tuna = { path = "../tuna" }
+
+[dev-dependencies]
+env_logger = "*"
