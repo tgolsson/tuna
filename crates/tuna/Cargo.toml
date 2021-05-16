@@ -19,3 +19,4 @@ serial_test = "0.5.1"
 [features]
 wasm-bindgen = ["parking_lot/wasm-bindgen"]
 default = []
+auto-register = []
