@@ -12,26 +12,42 @@ use include_dir::{include_dir, Dir};
 
 static PROJECT_DIR: Dir = include_dir!("html");
 
+fn content_type(url: &str) -> Option<Header> {
+    if url.ends_with(".js") {
+        return Header::from_str("Content-Type: application/javascript; charset=UTF=8").ok();
+    }
+
+    if url.ends_with(".css") {
+        return Header::from_str("Content-Type: text/css; charset=UTF=8").ok();
+    }
+
+    if url.ends_with(".html") {
+        return Header::from_str("Content-Type: text/html; charset=UTF=8").ok();
+    }
+
+    None
+}
+
 #[derive(DeJson, SerJson, Debug)]
-pub enum TunaMessage {
+enum TunaMessage {
     ListAll,
     Tuneables(tuna::TunaState),
     Delta((String, String, Tuneable)),
     Ok((String, String)),
 }
 
-pub struct TunaClient {
+struct TunaClient {
     websocket: WebSocket<TcpStream>,
 }
 
 impl TunaClient {
-    pub fn new(stream: TcpStream) -> Result<Self> {
+    fn new(stream: TcpStream) -> Result<Self> {
         let websocket = accept(stream)?;
 
         Ok(Self { websocket })
     }
 
-    pub fn poll(&mut self) -> bool {
+    fn poll(&mut self) -> bool {
         let msg = self.websocket.read_message().unwrap();
 
         if msg.is_text() {
@@ -77,32 +93,21 @@ impl TunaClient {
     }
 }
 
+/// The server to tuna web. Will deal with both serving of HTTP content and the
+/// websockets used for management.
 pub struct TunaServer {
     server: TcpListener,
     http_server: Server,
 }
 
-pub fn content_type(url: &str) -> Option<Header> {
-    if url.ends_with(".js") {
-        return Header::from_str("Content-Type: application/javascript; charset=UTF=8").ok();
-    }
-
-    if url.ends_with(".css") {
-        return Header::from_str("Content-Type: text/css; charset=UTF=8").ok();
-    }
-
-    if url.ends_with(".html") {
-        return Header::from_str("Content-Type: text/html; charset=UTF=8").ok();
-    }
-
-    None
-}
-
 impl TunaServer {
+    /// Create a new Tuna Web server. Will serve HTTP on the specified port, and
+    /// websocket traffic on the subsequent port (`port + 1`).
     pub fn new(port: u16) -> anyhow::Result<Self> {
-        let server = TcpListener::bind(("127.0.0.1", port + 1))?;
         let http_server = Server::http(("0.0.0.0", port))
             .map_err(|e| anyhow::format_err!("http server error: {}", e))?;
+
+        let server = TcpListener::bind(("127.0.0.1", port + 1))?;
 
         server.set_nonblocking(true)?;
 
@@ -112,55 +117,77 @@ impl TunaServer {
         })
     }
 
-    pub fn loop_once(&mut self) {
-        match self.server.accept() {
-            Ok((stream, addr)) => {
-                log::debug!("New Tuna client from: {:?}", addr);
-
-                match TunaClient::new(stream) {
-                    Ok(mut client) => {
-                        std::thread::spawn(move || loop {
-                            if !client.poll() {
-                                break;
+    /// Update the HTTP server, draining the request queue before returning.
+    pub fn work_http(&mut self) {
+        loop {
+            match self.http_server.try_recv() {
+                Ok(Some(req)) => {
+                    log::debug!("request: {:#?}", req);
+                    let response = match req.url() {
+                        "/" => HttpResponse::from_string(
+                            PROJECT_DIR
+                                .get_file("index.html")
+                                .unwrap()
+                                .contents_utf8()
+                                .unwrap(),
+                        )
+                        .with_status_code(200)
+                        .with_header(content_type(".html").unwrap()),
+                        _ => match PROJECT_DIR.get_file(&req.url()[1..]) {
+                            Some(contents) => {
+                                HttpResponse::from_string(contents.contents_utf8().unwrap())
+                                    .with_status_code(200)
+                                    .with_header(content_type(req.url()).unwrap())
                             }
-                        });
-                    }
-                    Err(e) => log::error!("failed to accept client: {}", e),
+                            _ => HttpResponse::from_string("not found").with_status_code(404),
+                        },
+                    };
+
+                    let _ = req.respond(response);
+                }
+                Ok(None) => {
+                    break;
+                }
+                Err(e) => {
+                    log::error!("Http Error: {:?}", e);
+                    break;
                 }
             }
-            Err(e) if e.kind() != std::io::ErrorKind::WouldBlock => {
-                log::error!("Error during accept: {:?}", e)
-            }
-            _ => {}
         }
+    }
 
-        match self.http_server.try_recv() {
-            Ok(Some(req)) => {
-                log::debug!("request: {:#?}", req);
-                let response = match req.url() {
-                    "/" => HttpResponse::from_string(
-                        PROJECT_DIR
-                            .get_file("index.html")
-                            .unwrap()
-                            .contents_utf8()
-                            .unwrap(),
-                    )
-                    .with_status_code(200)
-                    .with_header(content_type(".html").unwrap()),
-                    _ => match PROJECT_DIR.get_file(&req.url()[1..]) {
-                        Some(contents) => {
-                            HttpResponse::from_string(contents.contents_utf8().unwrap())
-                                .with_status_code(200)
-                                .with_header(content_type(req.url()).unwrap())
+    /// Update the websocket server, draining the connection queue before returning.
+    pub fn work_websocket(&mut self) {
+        loop {
+            match self.server.accept() {
+                Ok((stream, addr)) => {
+                    log::debug!("New Tuna client from: {:?}", addr);
+
+                    match TunaClient::new(stream) {
+                        Ok(mut client) => {
+                            std::thread::spawn(move || loop {
+                                if !client.poll() {
+                                    break;
+                                }
+                            });
                         }
-                        _ => HttpResponse::from_string("not found").with_status_code(404),
-                    },
-                };
-
-                let _ = req.respond(response);
+                        Err(e) => log::error!("failed to accept client: {}", e),
+                    }
+                }
+                Err(e) if e.kind() != std::io::ErrorKind::WouldBlock => {
+                    log::error!("Error during accept: {:?}", e);
+                    break;
+                }
+                _ => {
+                    break;
+                }
             }
-            Ok(None) => { /* intentionally blank */ }
-            Err(e) => log::error!("Http Error: {:?}", e),
         }
+    }
+    /// Update all connections and servers in one go. Note that the clients will
+    /// not be polled here as they are blocking.
+    pub fn loop_once(&mut self) {
+        self.work_http();
+        self.work_websocket();
     }
 }

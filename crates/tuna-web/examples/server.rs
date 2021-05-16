@@ -7,7 +7,6 @@
 */
 
 use tuna::*;
-use tuna_web::*;
 
 const FLOAT_VALUE1: Float32 = Float32::new("float", "name1", 1.0, Some(0.0), Some(1.0));
 const FLOAT_VALUE2: Float32 = Float32::new("float", "name2", 1.0, None, Some(1.0));
