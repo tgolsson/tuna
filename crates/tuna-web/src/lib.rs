@@ -55,17 +55,17 @@ impl TunaClient {
                         .unwrap();
                 }
 
-                TunaMessage::Delta((cat, name, t)) => {
-                    eprintln!("{:?}", t);
-                    t.apply_to(&cat, &name);
-                    eprintln!("{:?}", tuna::get::<tuna::Float32>(&cat, &name));
+                TunaMessage::Delta((category, name, tuneable)) => {
+                    tuneable.apply_to(&category, &name);
 
-                    let response = SerJson::serialize_json(&TunaMessage::Ok((cat, name)));
+                    let response = SerJson::serialize_json(&TunaMessage::Ok((category, name)));
                     self.websocket
                         .write_message(tungstenite::Message::Text(response))
                         .unwrap();
                 }
-                TunaMessage::Tuneables(_) | TunaMessage::Ok((_, _)) => panic!("unexpected"),
+                TunaMessage::Tuneables(_) | TunaMessage::Ok((_, _)) => {
+                    panic!("unexpected message kind")
+                }
             }
         } else if msg.is_close() {
             return false;
@@ -100,15 +100,6 @@ pub fn content_type(url: &str) -> Option<Header> {
 
 impl TunaServer {
     pub fn new(port: u16) -> anyhow::Result<Self> {
-        let res = TunaMessage::Delta((
-            "xx".into(),
-            "yy".into(),
-            Tuneable::Boolean(tuna::BooleanVariable {
-                default: true,
-                current: false,
-            }),
-        ));
-        eprintln!("{}", SerJson::serialize_json(&res));
         let server = TcpListener::bind(("127.0.0.1", port + 1))?;
         let http_server = Server::http(("0.0.0.0", port))
             .map_err(|e| anyhow::format_err!("http server error: {}", e))?;
@@ -124,7 +115,7 @@ impl TunaServer {
     pub fn loop_once(&mut self) {
         match self.server.accept() {
             Ok((stream, addr)) => {
-                log::info!("New Tuna client from: {:?}", addr);
+                log::debug!("New Tuna client from: {:?}", addr);
 
                 match TunaClient::new(stream) {
                     Ok(mut client) => {
@@ -138,14 +129,14 @@ impl TunaServer {
                 }
             }
             Err(e) if e.kind() != std::io::ErrorKind::WouldBlock => {
-                eprintln!("err: {:?}", e)
+                log::error!("Error during accept: {:?}", e)
             }
             _ => {}
         }
 
         match self.http_server.try_recv() {
             Ok(Some(req)) => {
-                eprintln!("request: {:#?}", req);
+                log::debug!("request: {:#?}", req);
                 let response = match req.url() {
                     "/" => HttpResponse::from_string(
                         PROJECT_DIR
@@ -168,8 +159,8 @@ impl TunaServer {
 
                 let _ = req.respond(response);
             }
-            Ok(None) => {}
-            Err(e) => eprintln!("err: {:?}", e),
+            Ok(None) => { /* intentionally blank */ }
+            Err(e) => log::error!("Http Error: {:?}", e),
         }
     }
 }
