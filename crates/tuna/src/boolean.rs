@@ -52,37 +52,41 @@ impl Boolean {
 
 #[cfg(test)]
 mod tests {
-    use crate::tuna::{self, Boolean};
+    use super::Boolean;
     use serial_test::serial;
 
     const TEST_VALUE1: Boolean = Boolean::new("bool", "name1", true);
-    const TEST_VALUE2: Boolean = Boolean::new("bool", "name2", true);
-    const TEST_VALUE3: Boolean = Boolean::new("bool", "name3", false);
+    const TEST_VALUE2: Boolean = Boolean::new("bool", "name2", false);
 
     #[test]
     #[serial]
-    fn test_default() {
+    fn default() {
         TEST_VALUE1.register();
+        TEST_VALUE2.register();
     }
 
     #[test]
     #[serial]
-    fn test_get() {
-        TEST_VALUE1.register();
-        assert_eq!(TEST_VALUE1.read(), Some(1.0));
+    fn get() {
+        assert_eq!(TEST_VALUE1.read(), Some(true));
+        assert_eq!(TEST_VALUE2.read(), Some(false));
     }
 
     #[test]
     #[serial]
-    fn test_set() {
-        TEST_VALUE1.write(2.0);
-        assert_eq!(TEST_VALUE1.read(), Some(2.0));
+    fn set() {
+        TEST_VALUE1.write(false);
+        TEST_VALUE2.write(true);
+        assert_eq!(TEST_VALUE1.read(), Some(false));
+        assert_eq!(TEST_VALUE2.read(), Some(true));
     }
 
     #[test]
     #[serial]
-    fn test_reset() {
+    fn reset() {
         TEST_VALUE1.reset();
-        assert_eq!(TEST_VALUE1.read(), Some(1.0));
+        TEST_VALUE2.reset();
+        assert_eq!(TEST_VALUE1.read(), Some(true));
+        assert_eq!(TEST_VALUE2.read(), Some(false));
     }
 }

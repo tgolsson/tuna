@@ -66,38 +66,72 @@ impl Float32 {
 
 #[cfg(test)]
 mod tests {
-    use crate::tuna::{self, Float32};
+    use super::Float32;
 
     use serial_test::serial;
 
-    const TEST_VALUE1: Float32 = Float32::new("float", "name1", 1.0, Some(0.0), Some(1.0));
-    const TEST_VALUE2: Float32 = Float32::new("float", "name2", 1.0, None, Some(1.0));
-    const TEST_VALUE3: Float32 = Float32::new("float", "name3", 1.0, Some(0.0), None);
+    const TEST_VALUE1: Float32 = Float32::new("float", "name1", 0.1, Some(0.0), Some(1.0));
+    const TEST_VALUE2: Float32 = Float32::new("float", "name2", 0.2, None, Some(1.0));
+    const TEST_VALUE3: Float32 = Float32::new("float", "name3", 0.3, Some(0.0), None);
+    const TEST_VALUE4: Float32 = Float32::new("float", "name4", 0.4, None, None);
 
     #[test]
     #[serial]
-    fn test_default() {
+    fn default() {
         TEST_VALUE1.register();
+        TEST_VALUE2.register();
+        TEST_VALUE3.register();
+        TEST_VALUE4.register();
     }
 
     #[test]
     #[serial]
-    fn test_get() {
-        TEST_VALUE1.register();
-        assert_eq!(TEST_VALUE1.read(), Some(1.0));
+    fn get() {
+        assert_eq!(TEST_VALUE1.read(), Some(0.1));
+        assert_eq!(TEST_VALUE2.read(), Some(0.2));
+        assert_eq!(TEST_VALUE3.read(), Some(0.3));
+        assert_eq!(TEST_VALUE4.read(), Some(0.4));
     }
 
     #[test]
     #[serial]
-    fn test_set() {
+    fn set_high() {
         TEST_VALUE1.write(2.0);
-        assert_eq!(TEST_VALUE1.read(), Some(2.0));
+        TEST_VALUE2.write(2.0);
+        TEST_VALUE3.write(2.0);
+        TEST_VALUE4.write(2.0);
+
+        assert_eq!(TEST_VALUE1.read(), Some(1.0));
+        assert_eq!(TEST_VALUE2.read(), Some(1.0));
+        assert_eq!(TEST_VALUE3.read(), Some(2.0));
+        assert_eq!(TEST_VALUE4.read(), Some(2.0));
     }
 
     #[test]
     #[serial]
-    fn test_reset() {
+    fn set_low() {
+        TEST_VALUE1.write(-2.0);
+        TEST_VALUE2.write(-2.0);
+        TEST_VALUE3.write(-2.0);
+        TEST_VALUE4.write(-2.0);
+
+        assert_eq!(TEST_VALUE1.read(), Some(0.0));
+        assert_eq!(TEST_VALUE2.read(), Some(-2.0));
+        assert_eq!(TEST_VALUE3.read(), Some(0.0));
+        assert_eq!(TEST_VALUE4.read(), Some(-2.0));
+    }
+
+    #[test]
+    #[serial]
+    fn reset() {
         TEST_VALUE1.reset();
-        assert_eq!(TEST_VALUE1.read(), Some(1.0));
+        TEST_VALUE2.reset();
+        TEST_VALUE3.reset();
+        TEST_VALUE4.reset();
+
+        assert_eq!(TEST_VALUE1.read(), Some(0.1));
+        assert_eq!(TEST_VALUE2.read(), Some(0.2));
+        assert_eq!(TEST_VALUE3.read(), Some(0.3));
+        assert_eq!(TEST_VALUE4.read(), Some(0.4));
     }
 }

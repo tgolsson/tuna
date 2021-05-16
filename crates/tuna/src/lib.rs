@@ -100,7 +100,20 @@ macro_rules! impl_tuneable {
 
             fn update(tuneable: &mut Tuneable, var: $res) {
                 match tuneable {
-                    Tuneable::$typ(self_) => self_.current = var,
+                    Tuneable::$typ(self_) => {
+                        let var = if let Some(min) = self_.min {
+                            var.max(min)
+                        } else {
+                            var
+                        };
+
+                        let var = if let Some(max) = self_.max {
+                            var.min(max)
+                        } else {
+                            var
+                        };
+                        self_.current = var;
+                    }
                     _ => {}
                 }
             }
