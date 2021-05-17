@@ -16,7 +16,7 @@ nanoserde = "0.1.25"
 tiny_http = "0.8.2"
 tungstenite = "0.13.0"
 
-tuna = { version = "0.0.2", path = "../tuna" }
+tuna = { version = "0.0.3", path = "../tuna" }
 
 [dev-dependencies]
 env_logger = "0.8.3"

@@ -29,124 +29,168 @@ pub struct Float32Variable {
     pub(crate) current: f32,
 }
 
-impl Float32 {
-    /// Define a new float variable that can be registered with tuna
-    pub const fn new(
-        category: &'static str,
-        name: &'static str,
-        default: f32,
-        min: Option<f32>,
-        max: Option<f32>,
-    ) -> Self {
-        Self {
-            category,
-            name,
-            default,
-            min,
-            max,
-        }
-    }
+/// The definition of a float variable
+#[derive(Copy, Clone, Debug)]
+pub struct Float64 {
+    pub(crate) category: &'static str,
+    pub(crate) name: &'static str,
+    pub(crate) default: f64,
 
-    /// Explicitly register the float with tuna. This is not required, but
-    /// it'll reduce risk of stuttering when variables get registered.
-    pub fn register(&self) {
-        crate::register(self.category, self.name, self)
-    }
+    pub(crate) min: Option<f64>,
+    pub(crate) max: Option<f64>,
+}
 
-    /// Read the variable from tuna. If the feature `auto-register` is enabled,
-    /// will register on a lookup miss - otherwise it'll just return the default
-    /// value.
-    pub fn read(&self) -> Option<f32> {
-        crate::get::<Float32>(self.category, self.name).or_else(|| {
-            #[cfg(feature = "auto-register")]
-            self.register();
-            Some(self.default)
-        })
-    }
+/// The state of a float variable
+#[derive(Clone, Debug, SerJson, DeJson)]
+pub struct Float64Variable {
+    pub(crate) default: f64,
 
-    /// Update the stored value. Will do nothing if not registered.
-    pub fn write(&self, value: f32) {
-        crate::set::<Float32>(self.category, self.name, value);
-    }
-
-    /// Reset to the default value.
-    pub fn reset(&self) {
-        crate::reset::<Float32>(self.category, self.name);
-    }
+    pub(crate) min: Option<f64>,
+    pub(crate) max: Option<f64>,
+    pub(crate) current: f64,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Float32;
+    use super::{Float32, Float64};
 
     use serial_test::serial;
 
-    const TEST_VALUE1: Float32 = Float32::new("float", "name1", 0.1, Some(0.0), Some(1.0));
-    const TEST_VALUE2: Float32 = Float32::new("float", "name2", 0.2, None, Some(1.0));
-    const TEST_VALUE3: Float32 = Float32::new("float", "name3", 0.3, Some(0.0), None);
-    const TEST_VALUE4: Float32 = Float32::new("float", "name4", 0.4, None, None);
+    const TEST_FLOAT32_1: Float32 = Float32::new("float", "float32_1", 0.1, Some(0.0), Some(1.0));
+    const TEST_FLOAT32_2: Float32 = Float32::new("float", "float32_2", 0.2, None, Some(1.0));
+    const TEST_FLOAT32_3: Float32 = Float32::new("float", "float32_3", 0.3, Some(0.0), None);
+    const TEST_FLOAT32_4: Float32 = Float32::new("float", "float32_4", 0.4, None, None);
 
     #[test]
     #[serial]
-    fn default() {
-        TEST_VALUE1.register();
-        TEST_VALUE2.register();
-        TEST_VALUE3.register();
-        TEST_VALUE4.register();
+    fn default_32() {
+        TEST_FLOAT32_1.register();
+        TEST_FLOAT32_2.register();
+        TEST_FLOAT32_3.register();
+        TEST_FLOAT32_4.register();
     }
 
     #[test]
     #[serial]
-    fn get() {
-        TEST_VALUE1.reset();
-        TEST_VALUE2.reset();
-        TEST_VALUE3.reset();
-        TEST_VALUE4.reset();
-        assert_eq!(TEST_VALUE1.read(), Some(0.1));
-        assert_eq!(TEST_VALUE2.read(), Some(0.2));
-        assert_eq!(TEST_VALUE3.read(), Some(0.3));
-        assert_eq!(TEST_VALUE4.read(), Some(0.4));
+    fn get_32() {
+        TEST_FLOAT32_1.reset();
+        TEST_FLOAT32_2.reset();
+        TEST_FLOAT32_3.reset();
+        TEST_FLOAT32_4.reset();
+        assert_eq!(TEST_FLOAT32_1.read(), 0.1);
+        assert_eq!(TEST_FLOAT32_2.read(), 0.2);
+        assert_eq!(TEST_FLOAT32_3.read(), 0.3);
+        assert_eq!(TEST_FLOAT32_4.read(), 0.4);
     }
 
     #[test]
     #[serial]
-    fn set_high() {
-        TEST_VALUE1.write(2.0);
-        TEST_VALUE2.write(2.0);
-        TEST_VALUE3.write(2.0);
-        TEST_VALUE4.write(2.0);
+    fn set_high_32() {
+        TEST_FLOAT32_1.write(2.0);
+        TEST_FLOAT32_2.write(2.0);
+        TEST_FLOAT32_3.write(2.0);
+        TEST_FLOAT32_4.write(2.0);
 
-        assert_eq!(TEST_VALUE1.read(), Some(1.0));
-        assert_eq!(TEST_VALUE2.read(), Some(1.0));
-        assert_eq!(TEST_VALUE3.read(), Some(2.0));
-        assert_eq!(TEST_VALUE4.read(), Some(2.0));
+        assert_eq!(TEST_FLOAT32_1.read(), 1.0);
+        assert_eq!(TEST_FLOAT32_2.read(), 1.0);
+        assert_eq!(TEST_FLOAT32_3.read(), 2.0);
+        assert_eq!(TEST_FLOAT32_4.read(), 2.0);
     }
 
     #[test]
     #[serial]
-    fn set_low() {
-        TEST_VALUE1.write(-2.0);
-        TEST_VALUE2.write(-2.0);
-        TEST_VALUE3.write(-2.0);
-        TEST_VALUE4.write(-2.0);
+    fn set_low_32() {
+        TEST_FLOAT32_1.write(-2.0);
+        TEST_FLOAT32_2.write(-2.0);
+        TEST_FLOAT32_3.write(-2.0);
+        TEST_FLOAT32_4.write(-2.0);
 
-        assert_eq!(TEST_VALUE1.read(), Some(0.0));
-        assert_eq!(TEST_VALUE2.read(), Some(-2.0));
-        assert_eq!(TEST_VALUE3.read(), Some(0.0));
-        assert_eq!(TEST_VALUE4.read(), Some(-2.0));
+        assert_eq!(TEST_FLOAT32_1.read(), 0.0);
+        assert_eq!(TEST_FLOAT32_2.read(), -2.0);
+        assert_eq!(TEST_FLOAT32_3.read(), 0.0);
+        assert_eq!(TEST_FLOAT32_4.read(), -2.0);
     }
 
     #[test]
     #[serial]
-    fn reset() {
-        TEST_VALUE1.reset();
-        TEST_VALUE2.reset();
-        TEST_VALUE3.reset();
-        TEST_VALUE4.reset();
+    fn reset_32() {
+        TEST_FLOAT32_1.reset();
+        TEST_FLOAT32_2.reset();
+        TEST_FLOAT32_3.reset();
+        TEST_FLOAT32_4.reset();
 
-        assert_eq!(TEST_VALUE1.read(), Some(0.1));
-        assert_eq!(TEST_VALUE2.read(), Some(0.2));
-        assert_eq!(TEST_VALUE3.read(), Some(0.3));
-        assert_eq!(TEST_VALUE4.read(), Some(0.4));
+        assert_eq!(TEST_FLOAT32_1.read(), 0.1);
+        assert_eq!(TEST_FLOAT32_2.read(), 0.2);
+        assert_eq!(TEST_FLOAT32_3.read(), 0.3);
+        assert_eq!(TEST_FLOAT32_4.read(), 0.4);
+    }
+
+    const TEST_FLOAT64_1: Float64 = Float64::new("float", "float64_1", 0.1, Some(0.0), Some(1.0));
+    const TEST_FLOAT64_2: Float64 = Float64::new("float", "float64_2", 0.2, None, Some(1.0));
+    const TEST_FLOAT64_3: Float64 = Float64::new("float", "float64_3", 0.3, Some(0.0), None);
+    const TEST_FLOAT64_4: Float64 = Float64::new("float", "float64_4", 0.4, None, None);
+
+    #[test]
+    #[serial]
+    fn default_64() {
+        TEST_FLOAT64_1.register();
+        TEST_FLOAT64_2.register();
+        TEST_FLOAT64_3.register();
+        TEST_FLOAT64_4.register();
+    }
+
+    #[test]
+    #[serial]
+    fn get_64() {
+        TEST_FLOAT64_1.reset();
+        TEST_FLOAT64_2.reset();
+        TEST_FLOAT64_3.reset();
+        TEST_FLOAT64_4.reset();
+        assert_eq!(TEST_FLOAT64_1.read(), 0.1);
+        assert_eq!(TEST_FLOAT64_2.read(), 0.2);
+        assert_eq!(TEST_FLOAT64_3.read(), 0.3);
+        assert_eq!(TEST_FLOAT64_4.read(), 0.4);
+    }
+
+    #[test]
+    #[serial]
+    fn set_high_64() {
+        TEST_FLOAT64_1.write(2.0);
+        TEST_FLOAT64_2.write(2.0);
+        TEST_FLOAT64_3.write(2.0);
+        TEST_FLOAT64_4.write(2.0);
+
+        assert_eq!(TEST_FLOAT64_1.read(), 1.0);
+        assert_eq!(TEST_FLOAT64_2.read(), 1.0);
+        assert_eq!(TEST_FLOAT64_3.read(), 2.0);
+        assert_eq!(TEST_FLOAT64_4.read(), 2.0);
+    }
+
+    #[test]
+    #[serial]
+    fn set_low_64() {
+        TEST_FLOAT64_1.write(-2.0);
+        TEST_FLOAT64_2.write(-2.0);
+        TEST_FLOAT64_3.write(-2.0);
+        TEST_FLOAT64_4.write(-2.0);
+
+        assert_eq!(TEST_FLOAT64_1.read(), 0.0);
+        assert_eq!(TEST_FLOAT64_2.read(), -2.0);
+        assert_eq!(TEST_FLOAT64_3.read(), 0.0);
+        assert_eq!(TEST_FLOAT64_4.read(), -2.0);
+    }
+
+    #[test]
+    #[serial]
+    fn reset_64() {
+        TEST_FLOAT64_1.reset();
+        TEST_FLOAT64_2.reset();
+        TEST_FLOAT64_3.reset();
+        TEST_FLOAT64_4.reset();
+
+        assert_eq!(TEST_FLOAT64_1.read(), 0.1);
+        assert_eq!(TEST_FLOAT64_2.read(), 0.2);
+        assert_eq!(TEST_FLOAT64_3.read(), 0.3);
+        assert_eq!(TEST_FLOAT64_4.read(), 0.4);
     }
 }

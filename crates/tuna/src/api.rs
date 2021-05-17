@@ -63,3 +63,12 @@ pub fn reset<T: AsTuneable>(category: &str, name: &str) {
         T::reset(tuneable);
     }
 }
+
+/// Check if the value is registered
+pub fn is_registered(category: &str, name: &str) -> bool {
+    let mut tuna = TUNA_STATE.write();
+
+    tuna.get_mut(category)
+        .and_then(|group| group.get_mut(name))
+        .is_some()
+}

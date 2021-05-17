@@ -23,8 +23,9 @@ fn main() {
 }
 ```
 
-If you enable the `auto-register` feature, you can skip the first register call
-at some performance cost.
+The register call can be omitted, at some performance cost during the first
+read.
+
 
 Note that `tuna` is a work in progress! I'm working on it due to a need, but I
 want to dogfood it while I build it - not build a whole thing on its own.

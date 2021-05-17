@@ -1,6 +1,6 @@
 [package]
 name = "tuna"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Tom Solberg <me@sbg.dev>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -10,8 +10,9 @@ repository = "https://github.com/tgolsson/tuna"
 
 [dependencies]
 lazy_static = "1.4.0"
-parking_lot = "0.11.1"
+log = "0.4"
 nanoserde = "0.1.25"
+parking_lot = "0.11.1"
 
 [dev-dependencies]
 serial_test = "0.5.1"
@@ -19,4 +20,3 @@ serial_test = "0.5.1"
 [features]
 wasm-bindgen = ["parking_lot/wasm-bindgen"]
 default = []
-auto-register = []

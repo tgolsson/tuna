@@ -39,19 +39,23 @@ impl Boolean {
         crate::register(self.category, self.name, self)
     }
 
-    /// Read the variable from tuna. If the feature `auto-register` is enabled,
-    /// will register on a lookup miss - otherwise it'll just return the default
-    /// value.
-    pub fn read(&self) -> Option<bool> {
-        crate::get::<Boolean>(self.category, self.name).or_else(|| {
-            #[cfg(feature = "auto-register")]
+    /// Read the variable from tuna. This will automatically call register on a
+    /// lookup miss, and return the default value.
+    pub fn read(&self) -> bool {
+        crate::get::<Boolean>(self.category, self.name).unwrap_or_else(|| {
             self.register();
-            Some(self.default)
+            self.default
         })
     }
 
-    /// Update the stored value. Will do nothing if not registered.
+    /// Update the stored value. Will register and warn if not registered already in debug builds.
     pub fn write(&self, value: bool) {
+        #[cfg(debug_assertions)]
+        if !crate::is_registered(self.category, self.name) {
+            log::warn!("Setting unregistered value {}.{}", self.category, self.name);
+            self.register();
+        }
+
         crate::set::<Boolean>(self.category, self.name, value);
     }
 
@@ -81,17 +85,18 @@ mod tests {
     fn get() {
         TEST_VALUE1.reset();
         TEST_VALUE2.reset();
-        assert_eq!(TEST_VALUE1.read(), Some(true));
-        assert_eq!(TEST_VALUE2.read(), Some(false));
+        assert_eq!(TEST_VALUE1.read(), true);
+        assert_eq!(TEST_VALUE2.read(), false);
     }
 
     #[test]
     #[serial]
     fn set() {
         TEST_VALUE1.write(false);
+        assert_eq!(TEST_VALUE1.read(), false);
+
         TEST_VALUE2.write(true);
-        assert_eq!(TEST_VALUE1.read(), Some(false));
-        assert_eq!(TEST_VALUE2.read(), Some(true));
+        assert_eq!(TEST_VALUE2.read(), true);
     }
 
     #[test]
@@ -99,7 +104,7 @@ mod tests {
     fn reset() {
         TEST_VALUE1.reset();
         TEST_VALUE2.reset();
-        assert_eq!(TEST_VALUE1.read(), Some(true));
-        assert_eq!(TEST_VALUE2.read(), Some(false));
+        assert_eq!(TEST_VALUE1.read(), true);
+        assert_eq!(TEST_VALUE2.read(), false);
     }
 }
