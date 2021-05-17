@@ -10,42 +10,57 @@ function insertChildAlphabetically(container, item, name) {
 }
 
 function tuneableToTag(tuneable) {
-    if (tuneable.hasOwnProperty("Float32")) {
-        return "float";
-    }
-
     if (tuneable.hasOwnProperty("Boolean")) {
         return "bool";
     }
 
-    throw "What teh fuck";
+    if (tuneable.hasOwnProperty("Int32") || tuneable.hasOwnProperty("Int64")) {
+        return "int";
+    }
+
+    if (
+        tuneable.hasOwnProperty("Float32") ||
+        tuneable.hasOwnProperty("Float64")
+    ) {
+        return "float";
+    }
+
+    throw "Unknown variable type: " + tuneable;
+}
+
+function getInner(tuneable) {
+    if (tuneable.hasOwnProperty("Boolean")) {
+        return tuneable["Boolean"][0];
+    }
+
+    if (tuneable.hasOwnProperty("Int32")) {
+        return tuneable["Int32"][0];
+    }
+
+    if (tuneable.hasOwnProperty("Float32")) {
+        return tuneable["Float32"][0];
+    }
+
+    if (tuneable.hasOwnProperty("Int64")) {
+        return tuneable["Int64"][0];
+    }
+
+    if (tuneable.hasOwnProperty("Float64")) {
+        return tuneable["Float64"][0];
+    }
+
+    throw "Unknown variable type: " + tuneable;
 }
 
 function tuneableToValue(tuneable) {
-    if (tuneable.hasOwnProperty("Float32")) {
-        return tuneable.Float32[0].current;
-    }
-
-    if (tuneable.hasOwnProperty("Boolean")) {
-        return tuneable.Boolean[0].current;
-    }
-
-    throw "What teh fuck";
+    return getInner(tuneable).current;
 }
 
 function tuneableToWidgetConfig(type, tuneable, widget) {
     switch (type) {
+        case "float":
         case "int": {
-            let inner = tuneable["Int32"][0];
-            widget.min = inner.min;
-            widget.max = inner.max;
-            widget.default = inner.default;
-            widget.value = inner.current;
-            break;
-        }
-        case "float": {
-            let inner = tuneable["Float32"][0];
-            console.log(inner);
+            let inner = getInner(tuneable);
             widget.min = inner.min;
             widget.max = inner.max;
             widget.default = inner.default;
@@ -126,24 +141,18 @@ class Var {
     ////////////////////////////////////////////////////////////////////////////////
 
     setValue(tuneable) {
-        if (this.category == "float") {
-            console.log(tuneable);
-        }
-                tuneableToWidgetConfig(this.type, tuneable, this.realWidget);
+        tuneableToWidgetConfig(this.type, tuneable, this.realWidget);
         this.tuneable = tuneable;
         this.value = tuneableToValue(tuneable);
         switch (this.type) {
             case "float":
-        case "int":
-            console.log(this.realWidget.value, this.value);
+            case "int":
                 this.realWidget.value = this.value;
                 break;
             case "bool":
                 this.realWidget.checked = this.value;
                 break;
         }
-
-
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -170,21 +179,18 @@ class Var {
         let label = row.children[0];
         label.innerText = this.name;
 
-        let widget = undefined;
+        let widget = document.createElement("input");
         switch (this.type) {
             case "int": // int
-                widget = document.createElement("input");
-                widget.type = "number";
+                widget.type = "range";
                 widget.value = this.value;
-            tuneableToWidgetConfig(this.type, this.tuneable, widget);
+                tuneableToWidgetConfig(this.type, this.tuneable, widget);
                 break;
             case "float":
-                widget = document.createElement("input");
                 widget.type = "range";
                 tuneableToWidgetConfig(this.type, this.tuneable, widget);
                 break;
             case "bool":
-                widget = document.createElement("input");
                 widget.type = "checkbox";
                 widget.checked = this.value;
                 break;
@@ -205,24 +211,22 @@ class Var {
 
     onchange(e) {
         switch (this.type) {
-        case "int":
-            this.value = e.target.value;
-            this.tuneable['Int32'][0].current = parseInt(this.value);
+            case "int":
+                this.value = e.target.value;
+                getInner(this.tuneable).current = parseInt(this.value);
                 break;
             case "float":
                 this.value = e.target.value;
-            this.tuneable['Float32'][0].current = parseFloat(this.value);
+                getInner(this.tuneable).current = parseFloat(this.value);
                 break;
-        case "bool":
-
-            this.value = e.target.checked;
-            this.tuneable['Boolean'][0].current = this.value;
+            case "bool":
+                this.value = e.target.checked;
+                getInner(this.tuneable).current = this.value;
                 break;
         }
 
         this.topWidget.classList.remove("table-success");
         this.topWidget.classList.add("table-warning");
-        console.log(this.tuneable);
         window.tuna.set(this.category, this.name, this.tuneable);
     }
 }
@@ -258,10 +262,10 @@ class Vars {
                     this.createVariable(category, name, details);
                 }
             }
-        } else if (msg.hasOwnProperty("Delta")){
+        } else if (msg.hasOwnProperty("Delta")) {
             const [category, name, tuneable] = msg["Delta"];
             this.updateVariable(category, name, tuneable);
-        } else if (msg.hasOwnProperty("Ok")){
+        } else if (msg.hasOwnProperty("Ok")) {
             const [[category, name]] = msg["Ok"];
             this.ok(category, name);
         }
