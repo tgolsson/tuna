@@ -771,7 +771,7 @@ dependencies = [
 
 [[package]]
 name = "tuna-web"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "env_logger",
