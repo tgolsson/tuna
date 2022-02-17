@@ -1,4 +1,4 @@
-// Author: Tom Solberg <tom.olsson@embark-studios.com>
+// Author: Tom Solberg <me@sbg.dev>
 // Copyright © 2021, Tom Solberg, all rights reserved.
 // Created: 17 May 2021
 
