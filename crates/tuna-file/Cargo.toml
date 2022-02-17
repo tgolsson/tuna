@@ -10,5 +10,5 @@ toml = "*"
 notify = "4"
 anyhow = "1"
 
-tuna = { path = "../tuna" }
+tuna = { version = "^0.1", path = "../tuna" }
 log = "0.4"
