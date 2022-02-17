@@ -26,6 +26,28 @@ fn main() {
 The register call can be omitted, at some performance cost during the first
 read.
 
+``` rust
+extern crate tuna;
+
+#[tuna::tuna]
+mod logging {
+	pub(super) const ENABLE: bool = false;
+}
+
+fn main() {
+    logging::register();
+
+    for i in 0..10 {
+        if (logging::ENABLE.read()) {
+            eprintln!("looping once");
+        }
+
+		if i == 5 {
+		    logging::ENABLE.write(true);
+		}
+    }
+}
+```
 
 Note that `tuna` is a work in progress! I'm working on it due to a need, but I
 want to dogfood it while I build it - not build a whole thing on its own.

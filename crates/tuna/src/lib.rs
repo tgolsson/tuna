@@ -1,3 +1,4 @@
+#[doc = include_str!("../README.md")]
 use parking_lot::RwLock;
 
 use nanoserde::{DeJson, SerJson};
@@ -7,6 +8,8 @@ mod api;
 mod boolean;
 mod float;
 mod int;
+
+pub use tuna_macros::tuna;
 
 pub type TunaState = HashMap<String, HashMap<String, Tuneable>>;
 
@@ -35,7 +38,7 @@ impl Tuneable {
             Self::Int32(v) => api::set::<Int32>(category, name, v.current),
             Self::Int64(v) => api::set::<Int64>(category, name, v.current),
             _ => unreachable!(),
-        }
+        };
     }
 }
 
@@ -56,10 +59,13 @@ macro_rules! impl_tuneable_simple {
                 Tuneable::$typ(var)
             }
 
-            fn update(tuneable: &mut Tuneable, var: $res) {
+            fn update(tuneable: &mut Tuneable, var: $res) -> bool {
                 match tuneable {
-                    Tuneable::$typ(self_) => self_.current = var,
-                    _ => {}
+                    Tuneable::$typ(self_) => {
+                        self_.current = var;
+                        true
+                    }
+                    _ => false,
                 }
             }
 
@@ -153,7 +159,7 @@ macro_rules! impl_tuneable {
                 Tuneable::$typ(var)
             }
 
-            fn update(tuneable: &mut Tuneable, var: $res) {
+            fn update(tuneable: &mut Tuneable, var: $res) -> bool {
                 match tuneable {
                     Tuneable::$typ(self_) => {
                         let var = if let Some(min) = self_.min {
@@ -168,8 +174,9 @@ macro_rules! impl_tuneable {
                             var
                         };
                         self_.current = var;
+                        true
                     }
-                    _ => {}
+                    _ => false,
                 }
             }
 

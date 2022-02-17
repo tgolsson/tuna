@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+* `AsTuneable::update` and `tuna::set` function now returns a bool if the write succeded
+* The `AsTuneable` now requires that the output type implements `Debug`
+* `tuna::register` and `set` will now log at `debug` level
+* `tuna::read` will log at trace level
+* There's now a derive macro to easily create and register multiple variables.
+
+
 ## Version 0.0.3
 
 * Add new types:

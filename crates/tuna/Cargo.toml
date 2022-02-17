@@ -1,6 +1,6 @@
 [package]
 name = "tuna"
-version = "0.0.3"
+version = "0.1.0"
 authors = ["Tom Solberg <me@sbg.dev>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -13,6 +13,7 @@ lazy_static = "1.4.0"
 log = "0.4"
 nanoserde = "0.1.25"
 parking_lot = "0.11.1"
+tuna-macros = { version = "0.1.0", path = "../tuna-macros" }
 
 [dev-dependencies]
 serial_test = "0.5.1"

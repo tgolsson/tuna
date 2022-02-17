@@ -11,10 +11,10 @@ use crate::{Tuneable, TUNA_STATE};
 
 /// Implemented by types that can be used to make tuneables; i.e., manipulated state with various constraints
 pub trait AsTuneable: Any + Clone + Sized {
-    type Result;
+    type Result: std::fmt::Debug;
 
     fn make_tuneable(&self) -> Tuneable;
-    fn update(tuneable: &mut Tuneable, var: Self::Result);
+    fn update(tuneable: &mut Tuneable, var: Self::Result) -> bool;
     fn reset(tuneable: &mut Tuneable);
     fn from_tuneable(v: &Tuneable) -> Option<Self::Result>;
 }
@@ -23,7 +23,12 @@ pub trait AsTuneable: Any + Clone + Sized {
 /// already exists, won't do anything.
 pub fn register<T: AsTuneable>(category: &str, name: &str, value: &T) {
     let mut tuna = TUNA_STATE.write();
-
+    log::debug!(
+        "Registering variable: {}/{} -> {:?}",
+        category,
+        name,
+        std::any::type_name::<T>(),
+    );
     if !tuna.contains_key(category) {
         tuna.insert(category.to_owned(), Default::default());
     }
@@ -40,18 +45,24 @@ pub fn register<T: AsTuneable>(category: &str, name: &str, value: &T) {
 /// Get a the value of tunable variable, if it matches the expected type
 pub fn get<T: AsTuneable>(category: &str, name: &str) -> Option<T::Result> {
     let tuna = TUNA_STATE.read();
-
-    tuna.get(category)
+    let res: Option<T::Result> = tuna
+        .get(category)
         .and_then(|group| group.get(name))
-        .and_then(|value| T::from_tuneable(value))
+        .and_then(|value| T::from_tuneable(value));
+
+    log::trace!("Reading variable {}/{} as {:?}", category, name, res);
+    res
 }
 
 /// Set a tuneable variable, if it makes the expected type
-pub fn set<T: AsTuneable>(category: &str, name: &str, value: T::Result) {
+pub fn set<T: AsTuneable>(category: &str, name: &str, value: T::Result) -> bool {
     let mut tuna = TUNA_STATE.write();
 
     if let Some(tuneable) = tuna.get_mut(category).and_then(|group| group.get_mut(name)) {
-        T::update(tuneable, value);
+        log::debug!("Setting variable {}/{} to {:?}", category, name, value);
+        T::update(tuneable, value)
+    } else {
+        false
     }
 }
 
