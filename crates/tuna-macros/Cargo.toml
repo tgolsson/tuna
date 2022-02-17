@@ -3,6 +3,11 @@ name = "tuna-macros"
 version = "0.1.0"
 edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors = ["Tom Solberg <me@sbg.dev>"]
+license = "MIT OR Apache-2.0"
+description = "Macros used by tuna."
+homepage = "https://github.com/tgolsson/tuna"
+repository = "https://github.com/tgolsson/tuna"
 
 [lib]
 proc-macro = true
