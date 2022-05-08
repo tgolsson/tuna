@@ -11,7 +11,7 @@ use crate::{Tuneable, TUNA_STATE};
 
 /// Implemented by types that can be used to make tuneables; i.e., manipulated state with various constraints
 pub trait AsTuneable: Any + Clone + Sized {
-    type Result: std::fmt::Debug;
+    type Result: std::fmt::Debug + Copy;
 
     fn make_tuneable(&self) -> Tuneable;
     fn update(tuneable: &mut Tuneable, var: Self::Result) -> bool;
@@ -59,8 +59,12 @@ pub fn set<T: AsTuneable>(category: &str, name: &str, value: T::Result) -> bool 
     let mut tuna = TUNA_STATE.write();
 
     if let Some(tuneable) = tuna.get_mut(category).and_then(|group| group.get_mut(name)) {
-        log::debug!("Setting variable {}/{} to {:?}", category, name, value);
-        T::update(tuneable, value)
+        if T::update(tuneable, value) {
+            log::debug!("Setting variable {}/{} to {:?}", category, name, value);
+            true
+        } else {
+            false
+        }
     } else {
         false
     }

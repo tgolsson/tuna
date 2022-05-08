@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+* `AsTuneable::Result` now requires the `Copy` trait
+* `set` will no longer log if not setting the value
+
+
+## Version 0.1.0
+
 * `AsTuneable::update` and `tuna::set` function now returns a bool if the write succeded
 * The `AsTuneable` now requires that the output type implements `Debug`
 * `tuna::register` and `set` will now log at `debug` level
