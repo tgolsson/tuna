@@ -140,7 +140,12 @@ impl Parse for Input {
 
 #[proc_macro_attribute]
 pub fn tuna(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let Input { name, fields, .. } = parse_macro_input!(item as Input);
+    let Input {
+        name,
+        fields,
+        visibility,
+        ..
+    } = parse_macro_input!(item as Input);
 
     let fns = fields
         .iter()
@@ -152,7 +157,7 @@ pub fn tuna(_attr: TokenStream, item: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
     let res = quote!(
-        mod #name {
+        #visibility mod #name {
             const NAME: &str = stringify!(#name);
             #fields
 
